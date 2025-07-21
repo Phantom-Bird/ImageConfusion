@@ -14,3 +14,7 @@ python __main__.py
 ![](example/image.png)
 
 ![](example/confused.png)
+
+缩放 1/3，质量 30：
+
+![](example/compressed.jpg) → ![](example/final.jpg)
