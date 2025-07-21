@@ -59,16 +59,44 @@ def add_ruler(img: Image, info: BlocksInfo, ruler_size: int) -> None:
 
     for y1, y2 in info.y_blocks:
         img.paste((255, 255, 255), box(0, y1, ruler_size - 1, y2))
+        
+def fill_gaps(img: Image.Image, blocks: BlocksInfo):
+    """
+    原地将块间空隙填充为最近邻像素
+    """
+    
+    for (_, pre_x2), (next_x1, _) in zip(blocks.x_blocks, blocks.x_blocks[1:]):
+        mid = (pre_x2 + next_x1) // 2
+        
+        left_crop = img.crop(box(pre_x2, 0, pre_x2, img.height - 1))
+        for x in range(pre_x2 + 1, mid + 1):
+            img.paste(left_crop, (x, 0))
+            
+        right_crop = img.crop(box(next_x1, 0, next_x1, img.height - 1))
+        for x in range(mid + 1, next_x1):
+            img.paste(right_crop, (x, 0))
+            
+    for (_, pre_y2), (next_y1, _) in zip(blocks.y_blocks, blocks.y_blocks[1:]):
+        mid = (pre_y2 + next_y1) // 2
+        
+        up_crop = img.crop(box(0, pre_y2, img.width - 1, pre_y2))
+        for y in range(pre_y2 + 1, mid + 1):
+            img.paste(up_crop, (0, y))
+            
+        down_crop = img.crop(box(0, next_y1, img.width - 1, next_y1))
+        for y in range(mid + 1, next_y1):
+            img.paste(down_crop, (0, y))
 
 def add_grid_and_ruler(img: Image.Image, block_size: tuple[int, int], grid_width: int, ruler_size: int) -> tuple[Image.Image, BlocksInfo]:
     info = get_stacked_equal_blocks_of(img.size, block_size)
     virt_size = get_virt_size(block_size, img.size)
 
     output_img, output_info = add_grid(img, info, grid_width, ruler_size, virt_size)
-    print(output_info)
+    # print(output_info)
+    fill_gaps(output_img, output_info)
     add_ruler(output_img, output_info, ruler_size)
     return output_img, output_info
-
+        
 
 # 以下为解码
 

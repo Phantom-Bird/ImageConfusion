@@ -12,7 +12,7 @@ def confuse(img: Image.Image, block_size: tuple[int, int], grid_width: int, rule
     blocks = get_stacked_equal_blocks_of(img.size, block_size)
 
     px, py = random_permutations((len(blocks.x_blocks), len(blocks.y_blocks)), seed)
-    print(px, py)
+    # print(px, py)
 
     output_img = shuffle_blocks_by(img, blocks, px, py, get_virt_size(block_size, img.size))
     output_img, _ = add_grid_and_ruler(output_img, block_size, grid_width, ruler_size)
@@ -27,7 +27,7 @@ def deconfuse(img: Image.Image, seed) -> Image.Image | None:
     output_img, stacked_blocks = delete_ruler_and_grid(img, blocks)
 
     px, py = random_permutations((len(blocks.x_blocks), len(blocks.y_blocks)), seed)
-    print(px, py)
+    # print(px, py)
 
     return shuffle_blocks_by(output_img, stacked_blocks, inverse(px), inverse(py))
 
@@ -35,6 +35,7 @@ def deconfuse(img: Image.Image, seed) -> Image.Image | None:
 if __name__ == '__main__':
     img = Image.open('test.png')
     con_img = confuse(img, (16, 16), 4, 16, 0)
+    con_img.show()
 
     # 测试压缩图像鲁棒性
     con_img.resize((img.width // 2, img.height // 2)).save('test_con.jpg', optimize=True, quality=60)

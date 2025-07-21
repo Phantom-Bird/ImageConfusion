@@ -15,6 +15,8 @@ python __main__.py
 
 ![](example/confused.png)
 
-缩放 1/3，质量 30：
+缩放 1/2，质量 50：
 
 ![](example/compressed.jpg) → ![](example/final.jpg)
+
+我们发现只是因为强行打破像素连续性，导致压缩后出现了噪点。
