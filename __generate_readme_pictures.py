@@ -2,8 +2,8 @@ from confusion import confuse, deconfuse
 from PIL import Image
 from config import *
 
-scaling = 0.6
-quality = 60
+scaling = 0.5
+quality = 50
 
 img = Image.open('example/image.png')
 con_img = confuse(img, (BLOCK_SIZE, BLOCK_SIZE), GRID_WIDTH, RULER_SIZE, DEFAULT_SEED)

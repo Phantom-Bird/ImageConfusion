@@ -21,4 +21,5 @@ python __main__.py
 
 ![](example/compressed.jpg) → ![](example/final.jpg)
 
-我们发现只是因为强行打破像素连续性，导致压缩后出现了噪点。这可以通过加粗网格，增加缓冲避免。
+> [!CAUTION]
+> 若标尺损坏，将无法正确地解混淆图片。
