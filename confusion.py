@@ -33,17 +33,16 @@ def deconfuse(img: Image.Image, seed) -> Image.Image | None:
 
 
 if __name__ == '__main__':
-    img = Image.open('test.png')
-    con_img = confuse(img, (16, 16), 4, 16, 0)
-    con_img.show()
+    _img = Image.open('test.png')
+    _con_img = confuse(_img, (16, 16), 4, 16, 0)
+    _con_img.show()
 
     # 测试压缩图像鲁棒性
-    con_img.resize((img.width // 2, img.height // 2)).save('test_con.jpg', optimize=True, quality=60)
-    con_img = Image.open('test_con.jpg').copy()  # copy 防止占用图片文件导致清理失败
+    _con_img.resize((_img.width // 2, _img.height // 2)).save('test_con.jpg', optimize=True, quality=60)
+    _con_img = Image.open('test_con.jpg').copy()  # copy 防止占用图片文件导致清理失败
     os.remove('test_con.jpg')
 
-    con_img.show()
+    _con_img.show()
 
-    de_img = deconfuse(con_img, 0)
-    de_img.show()
-    # 效果非常好！
+    _de_img = deconfuse(_con_img, 0)
+    _de_img.show()

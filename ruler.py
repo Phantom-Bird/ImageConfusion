@@ -4,7 +4,7 @@ ruler 是这个算法的核心。
 """
 
 from block import *
-from PIL import Image, ImageFilter
+from PIL import Image
 from boxtools import box
 import config as cfg
 
@@ -46,7 +46,7 @@ def add_grid(img: Image.Image, info: BlocksInfo, grid_width: int, ruler_size: in
     return output_img, output_info
 
 
-def add_ruler(img: Image.Image, blocks: BlocksInfo, ruler_size: int) -> None:
+def add_ruler(img: Image, blocks: BlocksInfo, ruler_size: int) -> None:
     """
     绘制标尺，即在图片上/左方的 Block 坐标上绘制白块。
     **请注意：这是原地的**
@@ -61,15 +61,6 @@ def add_ruler(img: Image.Image, blocks: BlocksInfo, ruler_size: int) -> None:
     for y1, y2 in blocks.y_blocks:
         img.paste((255, 255, 255), box(0, y1, ruler_size - 1, y2))
 
-
-def blur_region(img: Image.Image, box: tuple[int, int, int, int], radius: float) -> None:
-    """
-    原地模糊图像的指定区域
-    """
-    img.paste(
-        img.crop(box).filter(ImageFilter.BoxBlur(radius)),
-        box[:2]
-    )
 
 def fill_gaps(img: Image.Image, blocks: BlocksInfo):
     """
@@ -89,21 +80,14 @@ def fill_gaps(img: Image.Image, blocks: BlocksInfo):
 
     for (_, pre_y2), (next_y1, _) in zip(blocks.y_blocks, blocks.y_blocks[1:]):
         mid = (pre_y2 + next_y1) // 2
-        tmp_img = Image.new('RGB', (img.width, next_y1 - pre_y2 - 1))
 
         up_crop = img.crop(box(0, pre_y2, img.width - 1, pre_y2))
         for y in range(pre_y2 + 1, mid + 1):
-            tmp_img.paste(up_crop, (0, y - pre_y2 - 1))
+            img.paste(up_crop, (0, y))
 
         down_crop = img.crop(box(0, next_y1, img.width - 1, next_y1))
         for y in range(mid + 1, next_y1):
-            tmp_img.paste(down_crop, (0, y - pre_y2 - 1))
-
-        tmp_img = tmp_img.filter(ImageFilter.BoxBlur((next_y1 - pre_y2) / 2))
-        img.paste(tmp_img, (0, pre_y2 + 1))
-
-    for (_, pre_x2), (next_x1, _) in zip(blocks.x_blocks, blocks.x_blocks[1:]):
-        blur_region(img, box(pre_x2 + 1, 0, next_x1 - 1, img.height - 1), (next_x1 - pre_x2) / 2)
+            img.paste(down_crop, (0, y))
 
 
 def add_grid_and_ruler(img: Image.Image, block_size: tuple[int, int], grid_width: int, ruler_size: int) \

@@ -36,11 +36,12 @@ def shuffle_blocks_by(img: Image.Image, blocks_old: BlocksInfo, permutation_x: l
         apply(permutation_y, blocks_old.y_blocks))
     return shuffle_blocks(img, blocks_old, blocks_new, virt_size)
 
-if __name__ == '__main__':
-    img = Image.open('test.png')
-    blocks = BlocksInfo([(0, 200), (201, 600)], [(0, 200), (201, 400)])
-    px = py = [1, 0]
-    output_img = shuffle_blocks_by(img, blocks, px, py)
-    output_img.show()
 
-    shuffle_blocks_by(output_img, blocks, inverse(px), inverse(py)).show()
+if __name__ == '__main__':
+    _img = Image.open('test.png')
+    _blocks = BlocksInfo([(0, 200), (201, 600)], [(0, 200), (201, 400)])
+    _px = _py = [1, 0]
+    _output_img = shuffle_blocks_by(_img, _blocks, _px, _py)
+    _output_img.show()
+
+    shuffle_blocks_by(_output_img, _blocks, inverse(_px), inverse(_py)).show()
