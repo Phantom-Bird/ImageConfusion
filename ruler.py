@@ -4,14 +4,15 @@ ruler 是这个算法的核心。
 """
 
 from block import *
-from PIL import Image
+from PIL import Image, ImageFilter
 from boxtools import box
 import config as cfg
 
 
 # 以下为编码
 
-def add_grid(img: Image.Image, info: BlocksInfo, grid_width: int, ruler_size: int, virt_size = None) -> tuple[Image.Image, BlocksInfo]:
+def add_grid(img: Image.Image, info: BlocksInfo, grid_width: int, ruler_size: int, virt_size=None) \
+        -> tuple[Image.Image, BlocksInfo]:
     """
     为原图添加网格，网格上的像素将会顺延。返回添加网格后的 Image, BlocksInfo
     :param img: 原图
@@ -45,49 +46,68 @@ def add_grid(img: Image.Image, info: BlocksInfo, grid_width: int, ruler_size: in
     return output_img, output_info
 
 
-def add_ruler(img: Image, info: BlocksInfo, ruler_size: int) -> None:
+def add_ruler(img: Image.Image, blocks: BlocksInfo, ruler_size: int) -> None:
     """
     绘制标尺，即在图片上/左方的 Block 坐标上绘制白块。
     **请注意：这是原地的**
     :param img: 待绘制图片
-    :param info: 块信息
+    :param blocks: 块信息
     :param ruler_size: 标尺大小
     """
 
-    for x1, x2 in info.x_blocks:
+    for x1, x2 in blocks.x_blocks:
         img.paste((255, 255, 255), box(x1, 0, x2, ruler_size - 1))
 
-    for y1, y2 in info.y_blocks:
+    for y1, y2 in blocks.y_blocks:
         img.paste((255, 255, 255), box(0, y1, ruler_size - 1, y2))
-        
+
+
+def blur_region(img: Image.Image, box: tuple[int, int, int, int], radius: float) -> None:
+    """
+    原地模糊图像的指定区域
+    """
+    img.paste(
+        img.crop(box).filter(ImageFilter.BoxBlur(radius)),
+        box[:2]
+    )
+
 def fill_gaps(img: Image.Image, blocks: BlocksInfo):
     """
-    原地将块间空隙填充为最近邻像素
+    原地将块间空隙填充为最近邻像素并增加模糊
     """
-    
+
     for (_, pre_x2), (next_x1, _) in zip(blocks.x_blocks, blocks.x_blocks[1:]):
         mid = (pre_x2 + next_x1) // 2
-        
+
         left_crop = img.crop(box(pre_x2, 0, pre_x2, img.height - 1))
         for x in range(pre_x2 + 1, mid + 1):
             img.paste(left_crop, (x, 0))
-            
+
         right_crop = img.crop(box(next_x1, 0, next_x1, img.height - 1))
         for x in range(mid + 1, next_x1):
             img.paste(right_crop, (x, 0))
-            
+
     for (_, pre_y2), (next_y1, _) in zip(blocks.y_blocks, blocks.y_blocks[1:]):
         mid = (pre_y2 + next_y1) // 2
-        
+        tmp_img = Image.new('RGB', (img.width, next_y1 - pre_y2 - 1))
+
         up_crop = img.crop(box(0, pre_y2, img.width - 1, pre_y2))
         for y in range(pre_y2 + 1, mid + 1):
-            img.paste(up_crop, (0, y))
-            
+            tmp_img.paste(up_crop, (0, y - pre_y2 - 1))
+
         down_crop = img.crop(box(0, next_y1, img.width - 1, next_y1))
         for y in range(mid + 1, next_y1):
-            img.paste(down_crop, (0, y))
+            tmp_img.paste(down_crop, (0, y - pre_y2 - 1))
 
-def add_grid_and_ruler(img: Image.Image, block_size: tuple[int, int], grid_width: int, ruler_size: int) -> tuple[Image.Image, BlocksInfo]:
+        tmp_img = tmp_img.filter(ImageFilter.BoxBlur((next_y1 - pre_y2) / 2))
+        img.paste(tmp_img, (0, pre_y2 + 1))
+
+    for (_, pre_x2), (next_x1, _) in zip(blocks.x_blocks, blocks.x_blocks[1:]):
+        blur_region(img, box(pre_x2 + 1, 0, next_x1 - 1, img.height - 1), (next_x1 - pre_x2) / 2)
+
+
+def add_grid_and_ruler(img: Image.Image, block_size: tuple[int, int], grid_width: int, ruler_size: int) \
+        -> tuple[Image.Image, BlocksInfo]:
     info = get_stacked_equal_blocks_of(img.size, block_size)
     virt_size = get_virt_size(block_size, img.size)
 
@@ -96,13 +116,14 @@ def add_grid_and_ruler(img: Image.Image, block_size: tuple[int, int], grid_width
     fill_gaps(output_img, output_info)
     add_ruler(output_img, output_info, ruler_size)
     return output_img, output_info
-        
+
 
 # 以下为解码
 
 BLACK = 0
 WHITE = 1
-NONE  = 2
+NONE = 2
+
 
 def color2wb(color):
     if all(channel >= cfg.WHITE_THRESHOLD for channel in color):
@@ -110,6 +131,7 @@ def color2wb(color):
     elif all(channel <= cfg.BLACK_THRESHOLD for channel in color):
         return BLACK
     return NONE
+
 
 def recognize_ruler(img: Image.Image) -> BlocksInfo | None:
     img.convert('RGB')
@@ -157,6 +179,7 @@ def recognize_ruler(img: Image.Image) -> BlocksInfo | None:
 
     return BlocksInfo(x_blocks, y_blocks)
 
+
 def delete_ruler_and_grid(img: Image.Image, info: BlocksInfo) -> tuple[Image.Image, BlocksInfo]:
     """
     将含有标尺和网格的图片转换为正常图片
@@ -177,16 +200,17 @@ def delete_ruler_and_grid(img: Image.Image, info: BlocksInfo) -> tuple[Image.Ima
 
     return output_img, stacked_blocks
 
-if __name__ == '__main__':
-    img = Image.open('test.png')
-    output_img, new_info = add_grid_and_ruler(img, (12, 12), 2, 20)
-    output_img.show()
 
-    recognize_info = recognize_ruler(output_img)
+if __name__ == '__main__':
+    _img = Image.open('test.png')
+    _output_img, new_info = add_grid_and_ruler(_img, (12, 12), 2, 20)
+    _output_img.show()
+
+    recognize_info = recognize_ruler(_output_img)
 
     if recognize_info is None:
         print('未检测到标尺')
 
-    img, blocks = delete_ruler_and_grid(output_img, recognize_info)
-    img.show()
-    print(blocks)
+    _img, _blocks = delete_ruler_and_grid(_output_img, recognize_info)
+    _img.show()
+    print(_blocks)
