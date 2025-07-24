@@ -6,6 +6,7 @@ from confusion import confuse, deconfuse
 import config as cfg
 from config import IMG_VIEW_SIZE, DEFAULT_COLOR, DEFAULT_SEED
 
+pad = dict(padx=10, pady=10)
 
 class App(ctk.CTk):
     def __init__(self):
@@ -17,9 +18,6 @@ class App(ctk.CTk):
         self.button_confuse = ctk.CTkButton(self, text='混淆图片', command=self.confuse)
         self.button_deconfuse = ctk.CTkButton(self, text='解混淆图片', command=self.deconfuse)
 
-        self.loaded_img = self.img = Image.new('RGB', IMG_VIEW_SIZE, DEFAULT_COLOR)
-        self.img_view_label = ctk.CTkLabel(self, image=ctk.CTkImage(self.img, size=IMG_VIEW_SIZE), text='')
-
         self.load_file_button = ctk.CTkButton(self, text='加载图片', command=self.load_file)
         self.save_file_button = ctk.CTkButton(self, text='保存图片', command=self.save_file)
         self.reset_img_button = ctk.CTkButton(self, text='重置图片', command=self.reset_img)
@@ -30,29 +28,38 @@ class App(ctk.CTk):
 
         self.config_button = ctk.CTkButton(self, text='配置……', command=self.config)
 
+        self.img_view_frame = ctk.CTkFrame(self)
+        self.loaded_img = self.img = Image.new('RGB', IMG_VIEW_SIZE, DEFAULT_COLOR)
+        self.img_view_label = ctk.CTkLabel(self.img_view_frame, text='',
+                                           image=ctk.CTkImage(self.img, size=IMG_VIEW_SIZE))
+        self.img_size_label = ctk.CTkLabel(self.img_view_frame, text='{0}×{1}'.format(*IMG_VIEW_SIZE))
+
         self.grid_widgets()
 
     def grid_widgets(self):
-        self.label.grid(row=0, column=0, columnspan=2, padx=10, pady=10)
+        self.label.grid(row=0, column=0, columnspan=2, **pad)
 
-        self.button_confuse.grid(row=1, column=0, padx=10, pady=10)
-        self.button_deconfuse.grid(row=1, column=1, padx=10, pady=10)
+        self.button_confuse.grid(row=1, column=0, **pad)
+        self.button_deconfuse.grid(row=1, column=1, **pad)
 
-        self.load_file_button.grid(row=2, column=0, padx=10, pady=10)
-        self.save_file_button.grid(row=2, column=1, padx=10, pady=10)
+        self.load_file_button.grid(row=2, column=0, **pad)
+        self.save_file_button.grid(row=2, column=1, **pad)
 
-        self.reset_img_button.grid(row=3, column=0, columnspan=2, padx=10, pady=10)
+        self.reset_img_button.grid(row=3, column=0, columnspan=2, **pad)
 
-        self.seed_label.grid(row=4, column=0, padx=10, pady=10)
-        self.seed_entry.grid(row=4, column=1, columnspan=2, padx=10, pady=10)
+        self.seed_label.grid(row=4, column=0, **pad)
+        self.seed_entry.grid(row=4, column=1, columnspan=2, **pad)
 
-        self.config_button.grid(row=5, column=0, columnspan=3, padx=10, pady=10)
+        self.config_button.grid(row=5, column=0, columnspan=3, **pad)
 
-        self.img_view_label.grid(row=0, column=3, rowspan=6, padx=10, pady=10)
+        self.img_view_label.pack()
+        self.img_size_label.pack(side=ctk.RIGHT, **pad)
+        self.img_view_frame.grid(row=0, column=3, rowspan=6, **pad)
 
     def set_img(self, img: Image.Image):
         self.img = img
         self.img_view_label.configure(image=ctk.CTkImage(light_image=self.img, size=IMG_VIEW_SIZE))
+        self.img_size_label.configure(text=f'{img.width}×{img.height}')
 
     def load_file(self):
         file_path = filedialog.askopenfilename(filetypes=[('Image Files', '*.png;*.jpg;*.jpeg')])
