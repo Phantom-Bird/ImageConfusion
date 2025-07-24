@@ -6,6 +6,8 @@ from boxtools import box
 from ruler import add_grid_and_ruler, delete_ruler_and_grid, recognize_ruler
 from PIL import Image
 from block_shuffle import shuffle_blocks_by
+from ruler_fix import fix_ruler
+
 
 def confuse(img: Image.Image, block_size: tuple[int, int], grid_width: int, ruler_size: int, seed) -> Image.Image:
     """混淆图片并添加标尺"""
@@ -23,6 +25,11 @@ def deconfuse(img: Image.Image, seed) -> Image.Image | None:
     blocks = recognize_ruler(img)
     if blocks is None:
         return None
+
+    print(blocks)
+    blocks = BlocksInfo(list(fix_ruler(blocks.x_blocks)),
+                        list(fix_ruler(blocks.y_blocks)))
+    print(blocks)
 
     output_img, stacked_blocks = delete_ruler_and_grid(img, blocks)
 
